@@ -1,0 +1,278 @@
+#!/bin/bash
+
+################################################
+#                                              #
+# Purpose: Create an Automotive database       #
+# which has different options                  #
+# to add, delete and display a                 #
+# range of records from the database           # 
+# user will imput each option as command line  #
+# parameter script needs to be rerun for each  #
+# option to be evaluated                       #           
+################################################
+
+#array args consisting of all command line arguments
+args=("$@")
+
+#number of arguments inputted
+array_size=${#args[@]}
+
+
+function new 
+{
+
+   if [ -f "${args[0]}"  ]
+   then
+      #prompt if the file already exists
+      echo "The database file already exists"
+
+   else
+      #if file does not exist and new is specified create file
+      touch "${args[0]}"
+      chmod a+w "${args[0]}"
+      #prompt for database created after file is created
+      echo "New database has been created!"
+
+      #if 3rd com. ln. argument is not available specify
+      #Automobile Databse heading
+      if [ "$array_size" -eq "2" ]
+      then
+          echo "Automobile Database" > "${args[0]}"
+      else
+          echo "${args[2]}" > "${args[0]}"
+
+      fi
+
+   fi
+
+   # populate variables used for delete show and error checking
+   #num lines is the total number of lines
+   #ignore head - adds one to line count to ignore header
+   #back adds 1 to the range function so that it obtaines correct range
+
+   num_lines=`wc -l <"${args[0]}"`
+   ignore_head=$((${args[3]}+1))
+   back=$((${args[4]}+1))
+
+}
+
+#function responcible for adding entries to the databse
+#produces a line of feedback to user
+function add
+{
+	#echo to file name found in as the first argument
+	echo -ne "${args[2]}" "${args[3]}" "${args[4]}" "${args[5]}\n" >> "${args[0]}"
+	echo "Entry Added!"   
+
+}
+
+#function delete - responsible for removing values from the database
+#function is implemented as a case statement
+function delete
+{
+
+  case "${args[2]}" in
+    all)
+             #if delete all is signaled - delete all records
+	     #the header is left in the file 
+	     #message providing feed back to user is included
+	     sed -i "2","$num_lines"d "${args[0]}"
+	     echo "All Entries Deleted!"
+    ;;
+    single)
+	if [[ "$ignore_head" -gt "1" && "$ignore_head" -le "$num_lines" ]]
+	then
+		#delete single record when input from user is greater than 0
+                #and the input is smaller than the total number of lines
+		sed -i "$ignore_head"d "${args[0]}"
+        	echo "Single Deleted!"
+	else
+		#error if user entered an invalid data range
+		echo "The line is out of the total data range!"
+	fi
+    ;;
+    range)
+        if [[ "$ignore_head" -gt "1" &&  "$back" -le "$num_lines" && "$back" -gt "$ignore_head" ]]
+	then
+		#if range is entered and the first num of range is greater than 0
+		#the secon number in range is greater than the first and the second
+		#is smaller than the total numbber of lines
+		#delete the range always ignoring the header
+		#message feedback provided to user
+		sed -i "$ignore_head","$back"d "${args[0]}"
+		echo "Range Deleted!"
+	else
+		#error message for outside of range
+		echo "The line range is outside any logical range!"
+	fi
+    ;;
+    *)
+	#default case
+	echo "Invalid Parameter: Parameters: all,single,range Num1 Num2"
+  esac 
+
+
+}
+
+#function responsible for showing the data on the console
+#per the user specifications
+#implemented as a case statement
+function show
+{
+
+  case "${args[2]}" in
+    all)
+	#cat the entire file to the console
+	cat "${args[0]}"
+    ;;
+    single)
+	if [[ "$ignore_head" -gt "1" && "$ignore_head" -le "$num_lines" ]]
+	then
+		#show single record when input from user is greater than 0
+                #and the input is smaller than the total number of lines
+		echo "`sed -n "$ignore_head"p "${args[0]}"`"
+	else
+		#error case for data out of range
+		echo "The line is out of the total data range!"
+	fi
+    ;;
+    range)
+
+	if [[ "$ignore_head" -gt "1" &&  "$back" -le "$num_lines" && "$back" -gt "$ignore_head" ]]
+        then
+		#if range is entered and the first num of range is greater than 0
+		#the secon number in range is greater than the first and the second
+		#is smaller than the total numbber of lines
+		#show the range always ignoring the header
+		#message feedback provided to user
+		echo "`sed -n "$ignore_head","$back"p "${args[0]}"`"
+        else
+		echo "The line range is outside total data range!"
+	fi
+    ;;
+    *)
+	#default case
+	echo "Invalid Parameter: Parameters: all,single,range Line1 Line2"
+    ;;
+  esac   
+
+}
+
+
+# Main part of the script
+
+#if there are no command line arguments display error and how to use
+#script to the user
+if [ $# -eq "0" ]
+then
+   echo "No parameters specified. Usage dbname command param1 ... paramN "
+
+fi
+
+
+#check if a file exists
+if [ -f "${args[0]}" ]
+then
+
+   #check if the file has read permission
+   #output error message and exit
+   if  [[ !(-r "${args[0]}") ]]
+   then
+       echo "File does not have read permission!"
+       exit
+   fi
+
+   # populate variables used for delete show and error checking
+   #num lines is the total number of lines
+   #ignore head - adds one to line count to ignore header
+   #back adds 1 to the range function so that it obtaines correct range
+   num_lines=`wc -l <"${args[0]}"`
+   ignore_head=$((${args[3]}+1))
+   back=$((${args[4]}+1))
+
+   #if a file exists and it has read permission
+   #check if lines are 1 or smaller and output
+   #empty file -- header resides in line 1
+   if [ $num_lines -le 1 ]
+   then
+     echo "File is Empty!"
+   fi
+
+#if file specified does not go with a new command
+#display error condition and exit
+elif [ "${args[1]}" != "new" ]
+then
+   echo "File does not exist!" 
+   exit
+fi
+
+#check second argument for command using a case statement
+case "$2" in
+new)
+    #if command is new check for correct number of arguments
+    #and call function new
+    if [ $array_size -lt "2" ]
+    then
+	echo "Not enough arguments supplied for function New!"
+    else
+	new    #function call new
+    fi     
+;;
+add)
+    #if add check for file write permissions
+    if ! [[ -w "${args[0]}" ]] 
+    then
+	echo "File does not have write permission!"
+	exit			
+
+    fi
+
+    #check for correct number of arguments given to add
+    if [ $array_size -eq "6" ]
+    then
+    	add   #function call add
+    else
+    	echo "Not enough arguments supplied for functions Add!"
+    fi
+
+;;
+show)
+    #if show -- call function show
+    show
+;;
+delete)
+
+    #if delete - check for write permission if no write permission 
+    #exit
+    if ! [[ -w "${args[0]}" ]] 
+    then
+	echo "File does not have write permission!"
+	exit			
+
+    fi
+
+    #call delete function
+    delete
+;;
+*)
+    #default case
+    echo "Invalid Command Entered. Commands: new, add, delete, show"
+;;
+
+esac
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

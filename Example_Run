@@ -1,0 +1,30 @@
+Example Program Run:
+
+% ./database_bash.db DB new "Example"
+New database created
+% ./database_bash.db DB add Ford Mustang 2008 "blue with white stripes"
+Successfully added a record to the database
+% ./database_bash.db DB add Mitsubishi Lancer 2009 white
+Successfully added a record to the database
+% ./database_bash.db DB add Toyota "Camry LE" 2004 black
+Successfully added a record to the database
+% ./database_bash.db DB add Porsche "Cayenne S" 2007 red
+Successfully added a record to the database
+% ./database_bash.db DB show all
+Example
+Ford, Mustang, 2008, blue with white stripes
+Mitsubishi, Lancer, 2009, white
+Toyota, Camry LE, 2004, black
+Porsche, Cayenne S, 2007, red
+% ./database_bash.db DB delete single 2
+1 record deleted
+% ./database_bash.db DB show all
+Example
+Ford, Mustang, 2008, blue with white stripes
+Toyota, Camry LE, 2004, black
+Porsche, Cayenne S, 2007, red
+% cat DB
+Example
+Ford, Mustang, 2008, blue with white stripes
+Toyota, Camry LE, 2004, black
+Porsche, Cayenne S, 2007, red
